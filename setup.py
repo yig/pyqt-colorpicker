@@ -11,7 +11,7 @@ setup(
     author_email='nlfmt@gmx.de',
     license='MIT',
     packages=['vcolorpicker'],
-    install_requires=['pyqt5'],
+    install_requires=['qtpy'],
     keywords=["python", "color", "gui", "colorpicker", "visual"],
 
     classifiers=[

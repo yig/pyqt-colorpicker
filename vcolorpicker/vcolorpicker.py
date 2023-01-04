@@ -9,9 +9,9 @@
 import colorsys
 from typing import Union
 
-from PyQt5.QtCore import (QPoint, Qt)
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import (QApplication, QDialog, QGraphicsDropShadowEffect)
+from qtpy.QtCore import (QPoint, Qt)
+from qtpy.QtGui import QColor
+from qtpy.QtWidgets import (QApplication, QDialog, QGraphicsDropShadowEffect)
 
 from .ui_dark import Ui_ColorPicker as Ui_Dark
 from .ui_dark_alpha import Ui_ColorPicker as Ui_Dark_Alpha
