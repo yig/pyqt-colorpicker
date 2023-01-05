@@ -9,7 +9,7 @@
 import colorsys
 from typing import Union
 
-from qtpy.QtCore import (QPoint, Qt)
+from qtpy.QtCore import (QPoint, Qt, Signal)
 from qtpy.QtGui import (QColor, QPixmap, QImage)
 from qtpy.QtWidgets import (QApplication, QDialog, QGraphicsDropShadowEffect)
 
@@ -24,7 +24,9 @@ import numpy as np
 import skimage.color
 
 class ColorPicker(QDialog):
-
+    
+    currentColorChanged = Signal(tuple)
+    
     def __init__(self, lightTheme: bool = False, useAlpha: bool = False):
         """Create a new ColorPicker instance.
 
@@ -92,43 +94,91 @@ class ColorPicker(QDialog):
         self.color = (0, 0, 0)
         self.alpha = 100
         self.updateImages()
-
+        
+        # self.show()
+    
+    def setLastColor( self, color: tuple ):
+        """Set the last color.
+        
+        :param color: The color to show as previous color.
+        :return: None
+        """
+        
+        color = tuple( color )
+        assert len( color ) in (3,4)
+        
+        if len( color ) > 3: color = color[:3]
+        
+        ## Update instance variables
+        self.lastcolor = color
+        
+        ## Update GUI
+        self.setGUILastColor()
+    
+    def setCurrentColor( self, color: tuple, skip = None ):
+        """Set the current color.
+        
+        :param color: The color to show as the current color.
+        :param skip: Used internally to skip updating a GUI component that triggered the change.
+        :return: None
+        """
+        
+        color = tuple( color )
+        assert len( color ) in (3,4)
+        
+        ## Return early if no change
+        if color == self.color or color == ( tuple(self.color) + (self.alpha,) ): return
+        
+        ## Update instance variables.
+        if len( color ) > 3:
+            self.color, self.alpha = color[:3], color[3]
+        else:
+            self.color = color
+        
+        ## Update GUI
+        self.setGUICurrentColor( skip )
+        
+        ## Emit signal
+        self.currentColorChanged.emit( color )
+    
     def getColor(self, lc: tuple = None):
         """Open the UI and get a color from the user.
 
-        :param lc: The color to show as previous color.
+        :param lc: The color to show as previous and default color.
         :return: The selected color.
         """
-
-        if lc is not None and self.usingAlpha:
-            if len(lc) > 3:
-                alpha = lc[3]
-                lc = lc[:3]
-            else:
-                alpha = 100
-                assert len(lc) == 3
-            self.setAlpha(alpha)
-            self.alpha = alpha
-        if lc is None: lc = self.lastcolor
-        else: self.lastcolor = lc
-
-        self.color = lc
-        self.setLAB(lc)
-        self.labChanged()
-        r,g,b = color2rgb(lc)
-        self.ui.lastcolor_vis.setStyleSheet(f"background-color: rgb({r},{g},{b})")
-
+        
+        ## Set the previous color
+        if lc is not None:
+            self.setLastColor( lc )
+            
+            ## Set the default alpha
+            if len(lc) == 4: self.alpha = lc[3]
+        
+        ## Set the default color
+        self.color = self.lastcolor
+        
+        ## Update the GUI
+        self.setGUICurrentColor()
+        
         if self.exec_():
-            self.lastcolor = self.color
-            if self.usingAlpha: return self.color + (self.alpha,)
-            return self.color
-
+            ## Success.
+            ## Update the last color.
+            self.setLastColor( self.color )
+            ## Return the new color:
+            if self.usingAlpha:
+                return self.color + (self.alpha,)
+            else:
+                return self.color
+        
         else:
+            ## Cancel. Return the previous color.
             if self.usingAlpha: return self.lastcolor + (self.alpha,)
-            return self.lastcolor
+            else: return self.lastcolor
 
     # Update Functions
     def labChanged(self):
+        ## Get color from GUI widgets.
         # This is L in the range [0,100]
         L = 100 - self.ui.hue_selector.y() / 1.85
         # a,b are in the range [0,1]
@@ -138,13 +188,93 @@ class ColorPicker(QDialog):
         A = 128.0 * ( A*2.0 - 1.0 )
         B = 128.0 * ( B*2.0 - 1.0 )
         
-        r,g,b = color2rgb((L,A,B))
-        self.color = (L,A,B)
-        self.setRGB((r,g,b))
-        self.setHex(rgb2hex((r,g,b)))
-        self.ui.color_vis.setStyleSheet(f"background-color: rgb({r},{g},{b})")
-        # self.ui.color_view.setStyleSheet(f"border-radius: 5px;background-color: qlineargradient(x1:1, x2:0, stop:0 hsl({h}%,100%,50%), stop:1 #fff);")
+        color = L,A,B
         
+        if color != self.color:
+            self.setCurrentColor( color + (self.alpha,) if self.usingAlpha else color, 'lab' )
+    
+    def rgbChanged(self):
+        r,g,b = self.i(self.ui.red.text()), self.i(self.ui.green.text()), self.i(self.ui.blue.text())
+        cr,cg,cb = self.clampRGB((r,g,b))
+        self.setRGB((cr,cg,cb))
+
+        if r!=cr or (r==0 and self.ui.red.hasFocus()):
+            self.ui.red.selectAll()
+        if g!=cg or (g==0 and self.ui.green.hasFocus()):
+            self.ui.green.selectAll()
+        if b!=cb or (b==0 and self.ui.blue.hasFocus()):
+            self.ui.blue.selectAll()
+        
+        color = rgb2color((cr,cg,cb))
+        
+        if color != self.color:
+            self.setCurrentColor( color + (self.alpha,) if self.usingAlpha else color, 'rgb' )
+
+    def hexChanged(self):
+        hex = self.ui.hex.text()
+        try:
+            int(hex, 16)
+        except ValueError:
+            hex = "000000"
+            self.ui.hex.setText("")
+        
+        color = hex2color(hex)
+        
+        if color != self.color:
+            self.setCurrentColor( color + (self.alpha,) if self.usingAlpha else color, 'hex' )
+
+    def alphaChanged(self):
+        alpha = self.i(self.ui.alpha.text())
+        oldalpha = alpha
+        if alpha < 0: alpha = 0
+        if alpha > 100: alpha = 100
+        if alpha != oldalpha or alpha == 0:
+            self.ui.alpha.setText(str(alpha))
+            self.ui.alpha.selectAll()
+        
+        if alpha != self.alpha and self.usingAlpha:
+            self.setCurrentColor( self.color + (alpha,), 'alpha' )
+
+    # Internal setting functions
+    def setGUICurrentColor(self, skip = None):
+        """Update the current color shown in the GUI.
+        
+        :return: None
+        """
+        
+        if skip != 'lab': self.setLAB( self.color )
+        rgb = color2rgb( self.color )
+        if skip != 'rgb': self.setRGB( rgb )
+        if skip != 'hex': self.setHex( rgb2hex( rgb ) )
+        self.setRGBSwatch( rgb )
+        if skip != 'alpha': self.setAlpha( self.alpha )
+    
+    def setGUILastColor(self):
+        """Update the last color shown in the GUI.
+        
+        :return: None
+        """
+        
+        r,g,b = color2rgb( self.lastcolor )
+        self.ui.lastcolor_vis.setStyleSheet(f"background-color: rgb({r},{g},{b})")
+    
+    def setRGBSwatch(self, c):
+        r,g,b = c
+        self.ui.color_vis.setStyleSheet(f"background-color: rgb({r},{g},{b})")
+    
+    def setRGB(self, c):
+        r,g,b = c
+        self.ui.red.setText(str(self.i(r)))
+        self.ui.green.setText(str(self.i(g)))
+        self.ui.blue.setText(str(self.i(b)))
+
+    def setLAB(self, c):
+        L,A,B = c
+        
+        self.ui.hue_selector.move(7, int((100-L) * 1.85))
+        self.ui.selector.move(int((0.5*A/128.0 + 0.5) * 200 - 6), int(194 - ((0.5*B/128.0 + 0.5) * 200)))
+        
+        # Update the images
         self.updateImages()
     
     def updateImages(self):
@@ -175,69 +305,11 @@ class ColorPicker(QDialog):
         gamutL[:,:,0] = np.linspace(100,0,200)[:,None]
         self.ui.hue_bg.setPixmap( QPixmap( QImageFromNumPyImage( skimage.color.lab2rgb( gamutL ) ) ) )
     
-    def rgbChanged(self):
-        r,g,b = self.i(self.ui.red.text()), self.i(self.ui.green.text()), self.i(self.ui.blue.text())
-        cr,cg,cb = self.clampRGB((r,g,b))
-
-        if r!=cr or (r==0 and self.ui.red.hasFocus()):
-            self.setRGB((cr,cg,cb))
-            self.ui.red.selectAll()
-        if g!=cg or (g==0 and self.ui.green.hasFocus()):
-            self.setRGB((cr,cg,cb))
-            self.ui.green.selectAll()
-        if b!=cb or (b==0 and self.ui.blue.hasFocus()):
-            self.setRGB((cr,cg,cb))
-            self.ui.blue.selectAll()
-
-        self.color = rgb2color((r,g,b))
-        self.setLAB(self.color)
-        self.setHex(rgb2hex((r,g,b)))
-        self.ui.color_vis.setStyleSheet(f"background-color: rgb({r},{g},{b})")
-
-    def hexChanged(self):
-        hex = self.ui.hex.text()
-        try:
-            int(hex, 16)
-        except ValueError:
-            hex = "000000"
-            self.ui.hex.setText("")
-        r, g, b = hex2rgb(hex)
-        self.color = hex2color(hex)
-        self.setLAB(self.color)
-        self.setRGB((r, g, b))
-        self.ui.color_vis.setStyleSheet(f"background-color: rgb({r},{g},{b})")
-
-    def alphaChanged(self):
-        alpha = self.i(self.ui.alpha.text())
-        oldalpha = alpha
-        if alpha < 0: alpha = 0
-        if alpha > 100: alpha = 100
-        if alpha != oldalpha or alpha == 0:
-            self.ui.alpha.setText(str(alpha))
-            self.ui.alpha.selectAll()
-        self.alpha = alpha
-
-    # Internal setting functions
-    def setRGB(self, c):
-        r,g,b = c
-        self.ui.red.setText(str(self.i(r)))
-        self.ui.green.setText(str(self.i(g)))
-        self.ui.blue.setText(str(self.i(b)))
-
-    def setLAB(self, c):
-        L,A,B = c
-        
-        self.ui.hue_selector.move(7, int((100-L) * 1.85))
-        self.ui.selector.move(int((0.5*A/128.0 + 0.5) * 200 - 6), int(194 - ((0.5*B/128.0 + 0.5) * 200)))
-        
-        # Update the images
-        self.updateImages()
-
     def setHex(self, c):
         self.ui.hex.setText(c)
 
     def setAlpha(self, a):
-        self.ui.alpha.setText(str(a))
+        if self.usingAlpha: self.ui.alpha.setText(str(a))
 
     # Dragging Functions
     def setDragPos(self, event):
@@ -328,7 +400,7 @@ def rgb2hex(rgb: tuple) -> str:
     """
     
     r,g,b = rgb
-    hex = '%02x%02x%02x' % (int(r), int(g), int(b))
+    hex = '%02x%02x%02x' % (round(r), round(g), round(b))
     return hex
 
 
