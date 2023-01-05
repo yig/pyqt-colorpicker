@@ -1,4 +1,4 @@
-from vcolorpicker import getColor, useLightTheme, useAlpha, rgb2color
+from labcolorpicker import getColor, useLightTheme, useAlpha, rgb2color
 
 old_color = rgb2color((255, 255, 255))
 picked_color = getColor(old_color)
@@ -13,7 +13,7 @@ print(picked_color)
 
 
 # Using the old way of creating a ColorPicker:
-from vcolorpicker import ColorPicker, color2rgb, rgb2color
+from labcolorpicker import ColorPicker, color2rgb, rgb2color
 
 
 my_color_picker = ColorPicker(useAlpha=True)

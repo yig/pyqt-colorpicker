@@ -295,7 +295,7 @@ def color2rgb(color: tuple) -> tuple:
     :return: The converted rgb tuple color.
     """
 
-    return tuple( skimage.color.lab2rgb( np.asarray( color ).reshape(1,1,-1) )[0,0]*255.0 )
+    return tuple( skimage.color.lab2rgb( np.asarray( color ).astype(float).reshape(1,1,-1) )[0,0]*255.0 )
 
 
 def rgb2color(rgb: tuple) -> tuple:

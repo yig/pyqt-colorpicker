@@ -1,17 +1,17 @@
 from setuptools import setup
 
 setup(
-    name='vcolorpicker',
+    name='labcolorpicker',
     version='1.4.1',
-    description='Open a visual vcolorpicker from any project.',
-    long_description='Open a visual vcolorpicker from any project.\nFor more info visit '
-                     'https://github.com/nlfmt/pyqt-colorpicker',
-    url='https://github.com/nlfmt/pyqt-colorpicker',
-    author='nlfmt',
-    author_email='nlfmt@gmx.de',
+    description='Open a visual LAB colorpicker from any project.',
+    long_description='Open a visual LAB colorpicker from any project.\nFor more info visit '
+                     'https://github.com/yig/pyqt-colorpicker',
+    url='https://github.com/yig/pyqt-colorpicker',
+    author='Yotam Gingold',
+    author_email='yotam@yotamgingold.com',
     license='MIT',
-    packages=['vcolorpicker'],
-    install_requires=['qtpy'],
+    packages=['labcolorpicker'],
+    install_requires=['qtpy','scikit-image','numpy'],
     keywords=["python", "color", "gui", "colorpicker", "visual"],
 
     classifiers=[
@@ -20,5 +20,6 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11'
     ],
 )

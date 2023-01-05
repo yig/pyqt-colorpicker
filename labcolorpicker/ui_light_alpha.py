@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'vcolorpicker/ui/ui_light.ui'
+# Form implementation generated from reading ui file 'labcolorpicker/ui/ui_light_alpha.ui'
 #
 # Created by: PyQt6 UI code generator 6.2.0
 #
@@ -149,6 +149,7 @@ class Ui_ColorPicker(object):
         self.black_overlay = QtWidgets.QFrame(self.color_view)
         self.black_overlay.setStyleSheet("background-color: rgba(0,0,0,0);\n"
 "border-radius: 4px;\n"
+"\n"
 "")
         self.black_overlay.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
         self.black_overlay.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
@@ -196,7 +197,7 @@ class Ui_ColorPicker(object):
 "border-radius: 5px;")
         self.hue_selector.setText("")
         self.hue_selector.setObjectName("hue_selector")
-        self.hue = QtWidgets.QLabel(self.frame_2)
+        self.hue = QtWidgets.QFrame(self.frame_2)
         self.hue.setGeometry(QtCore.QRect(7, 0, 26, 200))
         self.hue.setMinimumSize(QtCore.QSize(20, 200))
         self.hue.setStyleSheet("background-color: none;")
@@ -223,7 +224,7 @@ class Ui_ColorPicker(object):
         self.formLayout.setSpacing(5)
         self.formLayout.setObjectName("formLayout")
         self.color_vis = QtWidgets.QLabel(self.editfields)
-        self.color_vis.setMinimumSize(QtCore.QSize(0, 30))
+        self.color_vis.setMinimumSize(QtCore.QSize(0, 24))
         self.color_vis.setStyleSheet("/* ALL CHANGES HERE WILL BE OVERWRITTEN */;\n"
 "background-color: rgb(255, 255, 255);\n"
 "")
@@ -231,7 +232,7 @@ class Ui_ColorPicker(object):
         self.color_vis.setObjectName("color_vis")
         self.formLayout.setWidget(0, QtWidgets.QFormLayout.ItemRole.FieldRole, self.color_vis)
         self.lastcolor_vis = QtWidgets.QLabel(self.editfields)
-        self.lastcolor_vis.setMinimumSize(QtCore.QSize(0, 30))
+        self.lastcolor_vis.setMinimumSize(QtCore.QSize(0, 24))
         self.lastcolor_vis.setStyleSheet("/* ALL CHANGES HERE WILL BE OVERWRITTEN */;\n"
 "background-color: rgb(0, 0, 0);")
         self.lastcolor_vis.setText("")
@@ -262,11 +263,18 @@ class Ui_ColorPicker(object):
         self.hex = QtWidgets.QLineEdit(self.editfields)
         self.hex.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.hex.setObjectName("hex")
-        self.formLayout.setWidget(5, QtWidgets.QFormLayout.ItemRole.FieldRole, self.hex)
+        self.formLayout.setWidget(6, QtWidgets.QFormLayout.ItemRole.FieldRole, self.hex)
         self.lbl_hex = QtWidgets.QLabel(self.editfields)
         self.lbl_hex.setStyleSheet("font-size: 14pt;")
         self.lbl_hex.setObjectName("lbl_hex")
-        self.formLayout.setWidget(5, QtWidgets.QFormLayout.ItemRole.LabelRole, self.lbl_hex)
+        self.formLayout.setWidget(6, QtWidgets.QFormLayout.ItemRole.LabelRole, self.lbl_hex)
+        self.alpha = QtWidgets.QLineEdit(self.editfields)
+        self.alpha.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.alpha.setObjectName("alpha")
+        self.formLayout.setWidget(5, QtWidgets.QFormLayout.ItemRole.FieldRole, self.alpha)
+        self.lbl_alpha = QtWidgets.QLabel(self.editfields)
+        self.lbl_alpha.setObjectName("lbl_alpha")
+        self.formLayout.setWidget(5, QtWidgets.QFormLayout.ItemRole.LabelRole, self.lbl_alpha)
         self.horizontalLayout.addWidget(self.editfields)
         self.verticalLayout_3.addWidget(self.content_bar)
         self.button_bar = QtWidgets.QFrame(self.drop_shadow_frame)
@@ -298,6 +306,7 @@ class Ui_ColorPicker(object):
         self.lbl_green.setBuddy(self.green)
         self.lbl_blue.setBuddy(self.blue)
         self.lbl_hex.setBuddy(self.blue)
+        self.lbl_alpha.setBuddy(self.blue)
 
         self.retranslateUi(ColorPicker)
         QtCore.QMetaObject.connectSlotsByName(ColorPicker)
@@ -316,3 +325,5 @@ class Ui_ColorPicker(object):
         self.blue.setText(_translate("ColorPicker", "255"))
         self.hex.setText(_translate("ColorPicker", "ffffff"))
         self.lbl_hex.setText(_translate("ColorPicker", "#"))
+        self.alpha.setText(_translate("ColorPicker", "255"))
+        self.lbl_alpha.setText(_translate("ColorPicker", "A"))
