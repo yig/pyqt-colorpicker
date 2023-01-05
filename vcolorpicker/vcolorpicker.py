@@ -174,12 +174,12 @@ class ColorPicker(QDialog):
         # testImage[:,:,0] = np.linspace(0,1.0,200)[:,None]
         # self.ui.color_view.setPixmap( QPixmap( QImageFromNumPyImage( testImage ) ) )
         
-        gamutL = np.zeros((20,200,3))
+        gamutL = np.zeros((200,20,3))
         ## AB are fixed.
         gamutL[:,:,1] = A
         gamutL[:,:,2] = B
         ## L varies from 0 to 100 alone the second axis
-        gamutL[:,:,0] = np.linspace(0,100,200)[None,:]
+        gamutL[:,:,0] = np.linspace(100,0,200)[:,None]
         self.ui.hue_bg.setPixmap( QPixmap( QImageFromNumPyImage( color.lab2rgb( gamutL ) ) ) )
     
     def rgbChanged(self):
