@@ -272,7 +272,7 @@ QPushButton:hover{
           <number>0</number>
          </property>
          <item>
-          <widget class="QFrame" name="color_view">
+          <widget class="QLabel" name="color_view">
            <property name="minimumSize">
             <size>
              <width>200</width>
@@ -316,9 +316,8 @@ background-color: qlineargradient(x1:1, x2:0, stop:0 hsl(0%,100%,50%), stop:1 rg
             <item>
              <widget class="QFrame" name="black_overlay">
               <property name="styleSheet">
-               <string notr="true">background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 0, 0, 0), stop:1 rgba(0, 0, 0, 255));
+               <string notr="true">background-color: rgba(0,0,0,0);
 border-radius: 4px;
-
 </string>
               </property>
               <property name="frameShape">
@@ -418,7 +417,7 @@ border-radius: 5px;</string>
            <property name="frameShadow">
             <enum>QFrame::Raised</enum>
            </property>
-           <widget class="QFrame" name="hue_bg">
+           <widget class="QLabel" name="hue_bg">
             <property name="geometry">
              <rect>
               <x>10</x>
@@ -467,7 +466,7 @@ border-radius: 5px;</string>
              <string/>
             </property>
            </widget>
-           <widget class="QFrame" name="hue">
+           <widget class="QLabel" name="hue">
             <property name="geometry">
              <rect>
               <x>7</x>

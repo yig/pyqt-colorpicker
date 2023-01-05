@@ -282,7 +282,7 @@ border-radius: 5px
           <number>0</number>
          </property>
          <item>
-          <widget class="QFrame" name="color_view">
+          <widget class="QLabel" name="color_view">
            <property name="minimumSize">
             <size>
              <width>200</width>
@@ -297,8 +297,7 @@ border-radius: 5px
            </property>
            <property name="styleSheet">
             <string notr="true">/* ALL CHANGES HERE WILL BE OVERWRITTEN */;
-background-color: qlineargradient(x1:1, x2:0, stop:0 hsl(0%,100%,50%), stop:1 rgba(255, 255, 255, 255));
-
+background-color: rgba(0,0,0,0);
 </string>
            </property>
            <property name="frameShape">
@@ -326,9 +325,7 @@ background-color: qlineargradient(x1:1, x2:0, stop:0 hsl(0%,100%,50%), stop:1 rg
             <item>
              <widget class="QFrame" name="black_overlay">
               <property name="styleSheet">
-               <string notr="true">background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 0, 0, 0), stop:1 rgba(0, 0, 0, 255));
-
-
+               <string notr="true">background-color: rgba(0,0,0,0);
 </string>
               </property>
               <property name="frameShape">
@@ -428,7 +425,7 @@ border-radius: 5px;</string>
            <property name="frameShadow">
             <enum>QFrame::Raised</enum>
            </property>
-           <widget class="QFrame" name="hue_bg">
+           <widget class="QLabel" name="hue_bg">
             <property name="geometry">
              <rect>
               <x>10</x>
@@ -444,7 +441,7 @@ border-radius: 5px;</string>
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(255, 0, 0, 255), stop:0.166 rgba(255, 255, 0, 255), stop:0.333 rgba(0, 255, 0, 255), stop:0.5 rgba(0, 255, 255, 255), stop:0.666 rgba(0, 0, 255, 255), stop:0.833 rgba(255, 0, 255, 255), stop:1 rgba(255, 0, 0, 255));
+             <string notr="true">background-color: rgba(0,0,0,0);
 border-radius: 5px;</string>
             </property>
             <property name="frameShape">

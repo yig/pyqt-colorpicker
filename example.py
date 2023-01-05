@@ -4,6 +4,9 @@ old_color = (255, 255, 255)
 picked_color = getColor(old_color)
 print(picked_color)
 
+import sys
+sys.exit(0)
+
 useLightTheme(True)
 useAlpha(True)
 

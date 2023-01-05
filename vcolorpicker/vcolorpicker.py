@@ -10,7 +10,7 @@ import colorsys
 from typing import Union
 
 from qtpy.QtCore import (QPoint, Qt)
-from qtpy.QtGui import QColor
+from qtpy.QtGui import (QColor, QPixmap, QImage)
 from qtpy.QtWidgets import (QApplication, QDialog, QGraphicsDropShadowEffect)
 
 from .ui_dark import Ui_ColorPicker as Ui_Dark
@@ -20,6 +20,8 @@ from .ui_light_alpha import Ui_ColorPicker as Ui_Light_Alpha
 
 from .img import *
 
+import numpy as np
+from skimage import color
 
 class ColorPicker(QDialog):
 
@@ -64,7 +66,8 @@ class ColorPicker(QDialog):
         self.ui.drop_shadow_frame.setGraphicsEffect(self.shadow)
 
         # Connect update functions
-        self.ui.hue.mouseMoveEvent = self.moveHueSelector
+        # self.ui.hue.mouseMoveEvent = self.moveHueSelector
+        self.ui.hue.mouseMoveEvent = self.moveLSelector
         self.ui.red.textEdited.connect(self.rgbChanged)
         self.ui.green.textEdited.connect(self.rgbChanged)
         self.ui.blue.textEdited.connect(self.rgbChanged)
@@ -78,8 +81,10 @@ class ColorPicker(QDialog):
         self.ui.window_title.mousePressEvent = self.setDragPos
 
         # Connect selector moving function
-        self.ui.black_overlay.mouseMoveEvent = self.moveSVSelector
-        self.ui.black_overlay.mousePressEvent = self.moveSVSelector
+        # self.ui.black_overlay.mouseMoveEvent = self.moveSVSelector
+        # self.ui.black_overlay.mousePressEvent = self.moveSVSelector
+        self.ui.black_overlay.mouseMoveEvent = self.moveABSelector
+        self.ui.black_overlay.mousePressEvent = self.moveABSelector
 
         # Connect Ok|Cancel Button Box and X Button
         self.ui.buttonBox.accepted.connect(self.accept)
@@ -98,8 +103,12 @@ class ColorPicker(QDialog):
         """
 
         if lc != None and self.usingAlpha:
-            alpha = lc[3]
-            lc = lc[:3]
+            if len(lc) > 3:
+                alpha = lc[3]
+                lc = lc[:3]
+            else:
+                alpha = 255
+                assert len(lc) == 3
             self.setAlpha(alpha)
             self.alpha = alpha
         if lc == None: lc = self.lastcolor
@@ -122,13 +131,53 @@ class ColorPicker(QDialog):
     # Update Functions
     def hsvChanged(self):
         h,s,v = (100 - self.ui.hue_selector.y() / 1.85, (self.ui.selector.x() + 6) / 2.0, (194 - self.ui.selector.y()) / 2.0)
+        print( h,s,v )
         r,g,b = hsv2rgb(h,s,v)
         self.color = (h,s,v)
         self.setRGB((r,g,b))
         self.setHex(hsv2hex(self.color))
         self.ui.color_vis.setStyleSheet(f"background-color: rgb({r},{g},{b})")
         self.ui.color_view.setStyleSheet(f"border-radius: 5px;background-color: qlineargradient(x1:1, x2:0, stop:0 hsl({h}%,100%,50%), stop:1 #fff);")
-
+    
+    def labChanged(self):
+        # This is L in the range [0,100]
+        L = 100 - self.ui.hue_selector.y() / 1.85
+        # a,b are in the range [0,1]
+        A = (self.ui.selector.x() + 6) / 200.0
+        B = (194 - self.ui.selector.y()) / 200.0
+        # Make them [-128,128]
+        A = 128.0 * ( A*2.0 - 1.0 )
+        B = 128.0 * ( B*2.0 - 1.0 )
+        
+        r,g,b = ( color.lab2rgb(np.array([(L,A,B)]))[0]*255. ).round().clip(0,255).astype(int)
+        self.color = (L,A,B)
+        self.setRGB((r,g,b))
+        self.setHex(rgb2hex((r,g,b)))
+        self.ui.color_vis.setStyleSheet(f"background-color: rgb({r},{g},{b})")
+        # self.ui.color_view.setStyleSheet(f"border-radius: 5px;background-color: qlineargradient(x1:1, x2:0, stop:0 hsl({h}%,100%,50%), stop:1 #fff);")
+        
+        print( "LAB:", L, A, B )
+        
+        gamutAB = np.zeros((200,200,3))
+        ## L is fixed.
+        gamutAB[:,:,0] = L
+        ## A varies from -128 to 128 alone the first axis
+        gamutAB[:,:,1] = np.linspace(-128,128,200)[:,None]
+        ## B varies from -128 to 128 alone the second axis
+        gamutAB[:,:,2] = np.linspace(128,-128,200)[None,:]
+        # self.ui.color_view.setPixmap( QPixmap( QImageFromNumPyImage( color.lab2rgb( gamutAB ) ) ) )
+        testImage = 0.*gamutAB
+        testImage[:,:,0] = 1.0
+        self.ui.color_view.setPixmap( QPixmap( QImageFromNumPyImage( testImage ) ) )
+        
+        gamutL = np.zeros((20,200,3))
+        ## AB are fixed.
+        gamutL[:,:,1] = A
+        gamutL[:,:,2] = B
+        ## L varies from 0 to 100 alone the second axis
+        gamutL[:,:,0] = np.linspace(0,100,200)[None,:]
+        self.ui.hue_bg.setPixmap( QPixmap( QImageFromNumPyImage( color.lab2rgb( gamutL ) ) ) )
+    
     def rgbChanged(self):
         r,g,b = self.i(self.ui.red.text()), self.i(self.ui.green.text()), self.i(self.ui.blue.text())
         cr,cg,cb = self.clampRGB((r,g,b))
@@ -209,7 +258,17 @@ class ColorPicker(QDialog):
             if pos.y() > 200: pos.setY(200)
             self.ui.selector.move(pos - QPoint(6,6))
             self.hsvChanged()
-
+    
+    def moveABSelector(self, event):
+        if event.buttons() == Qt.LeftButton:
+            pos = event.pos()
+            if pos.x() < 0: pos.setX(0)
+            if pos.y() < 0: pos.setY(0)
+            if pos.x() > 200: pos.setX(200)
+            if pos.y() > 200: pos.setY(200)
+            self.ui.selector.move(pos - QPoint(6,6))
+            self.labChanged()
+    
     def moveHueSelector(self, event):
         if event.buttons() == Qt.LeftButton:
             pos = event.pos().y() - 7
@@ -217,6 +276,14 @@ class ColorPicker(QDialog):
             if pos > 185: pos = 185
             self.ui.hue_selector.move(QPoint(7, pos))
             self.hsvChanged()
+    
+    def moveLSelector(self, event):
+        if event.buttons() == Qt.LeftButton:
+            pos = event.pos().y() - 7
+            if pos < 0: pos = 0
+            if pos > 185: pos = 185
+            self.ui.hue_selector.move(QPoint(7, pos))
+            self.labChanged()
 
     # Utility
 
@@ -333,6 +400,17 @@ def hsv2hex(h_or_color: Union[tuple, int], s: int = 0, v: int = 0, a: int = 0) -
     else: h = h_or_color
     return rgb2hex(hsv2rgb(h, s, v))
 
+def QImageFromNumPyImage( arr ):
+    ## Source: https://stackoverflow.com/questions/34232632/convert-python-opencv-image-numpy-array-to-pyqt-qpixmap-image
+    assert len( arr.shape ) == 3 # width by height by channels
+    assert arr.shape[2] == 3 # 3 channels (RGB)
+    # Convert to an 8-bit image in contiguous memory
+    arr = np.require( (arr*255).round().clip(0,255), dtype = np.uint8, requirements = 'C' )
+    # Get parameters
+    height, width, channel = arr.shape
+    bytesPerLine = 3 * width
+    qImg = QImage( arr.data, width, height, bytesPerLine, QImage.Format_RGB888 )
+    return qImg
 
 # toplevel functions
 
