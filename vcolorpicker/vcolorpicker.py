@@ -161,14 +161,18 @@ class ColorPicker(QDialog):
         gamutAB = np.zeros((200,200,3))
         ## L is fixed.
         gamutAB[:,:,0] = L
-        ## A varies from -128 to 128 alone the first axis
-        gamutAB[:,:,1] = np.linspace(-128,128,200)[:,None]
-        ## B varies from -128 to 128 alone the second axis
-        gamutAB[:,:,2] = np.linspace(128,-128,200)[None,:]
-        # self.ui.color_view.setPixmap( QPixmap( QImageFromNumPyImage( color.lab2rgb( gamutAB ) ) ) )
-        testImage = 0.*gamutAB
-        testImage[:,:,0] = 1.0
-        self.ui.color_view.setPixmap( QPixmap( QImageFromNumPyImage( testImage ) ) )
+        ## A varies from -128 to 128 along the second axis (columns)
+        gamutAB[:,:,1] = np.linspace(-128,128,200)[None,:]
+        ## B varies from -128 to 128 along the first axis
+        gamutAB[:,:,2] = np.linspace(128,-128,200)[:,None]
+        self.ui.color_view.setPixmap( QPixmap( QImageFromNumPyImage( color.lab2rgb( gamutAB ) ) ) )
+        
+        ## Columns are +x axis on the image.
+        ## Rows are -y axis.
+        
+        # testImage = 0.*gamutAB
+        # testImage[:,:,0] = np.linspace(0,1.0,200)[:,None]
+        # self.ui.color_view.setPixmap( QPixmap( QImageFromNumPyImage( testImage ) ) )
         
         gamutL = np.zeros((20,200,3))
         ## AB are fixed.
