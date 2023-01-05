@@ -21,7 +21,7 @@ from .ui_light_alpha import Ui_ColorPicker as Ui_Light_Alpha
 from .img import *
 
 import numpy as np
-from skimage import color
+import skimage.color
 
 class ColorPicker(QDialog):
 
@@ -66,7 +66,6 @@ class ColorPicker(QDialog):
         self.ui.drop_shadow_frame.setGraphicsEffect(self.shadow)
 
         # Connect update functions
-        # self.ui.hue.mouseMoveEvent = self.moveHueSelector
         self.ui.hue.mouseMoveEvent = self.moveLSelector
         self.ui.red.textEdited.connect(self.rgbChanged)
         self.ui.green.textEdited.connect(self.rgbChanged)
@@ -81,8 +80,6 @@ class ColorPicker(QDialog):
         self.ui.window_title.mousePressEvent = self.setDragPos
 
         # Connect selector moving function
-        # self.ui.black_overlay.mouseMoveEvent = self.moveSVSelector
-        # self.ui.black_overlay.mousePressEvent = self.moveSVSelector
         self.ui.black_overlay.mouseMoveEvent = self.moveABSelector
         self.ui.black_overlay.mousePressEvent = self.moveABSelector
 
@@ -94,6 +91,7 @@ class ColorPicker(QDialog):
         self.lastcolor = (0, 0, 0)
         self.color = (0, 0, 0)
         self.alpha = 100
+        self.updateImages()
 
     def getColor(self, lc: tuple = None):
         """Open the UI and get a color from the user.
@@ -102,43 +100,34 @@ class ColorPicker(QDialog):
         :return: The selected color.
         """
 
-        if lc != None and self.usingAlpha:
+        if lc is not None and self.usingAlpha:
             if len(lc) > 3:
                 alpha = lc[3]
                 lc = lc[:3]
             else:
-                alpha = 255
+                alpha = 100
                 assert len(lc) == 3
             self.setAlpha(alpha)
             self.alpha = alpha
-        if lc == None: lc = self.lastcolor
+        if lc is None: lc = self.lastcolor
         else: self.lastcolor = lc
 
-        self.setRGB(lc)
-        self.rgbChanged()
-        r,g,b = lc
+        self.color = lc
+        self.setLAB(lc)
+        self.labChanged()
+        r,g,b = color2rgb(lc)
         self.ui.lastcolor_vis.setStyleSheet(f"background-color: rgb({r},{g},{b})")
 
         if self.exec_():
-            r, g, b = hsv2rgb(self.color)
-            self.lastcolor = (r,g,b)
-            if self.usingAlpha: return (r,g,b,self.alpha)
-            return (r,g,b)
+            self.lastcolor = self.color
+            if self.usingAlpha: return self.color + (self.alpha,)
+            return self.color
 
         else:
+            if self.usingAlpha: return self.lastcolor + (self.alpha,)
             return self.lastcolor
 
     # Update Functions
-    def hsvChanged(self):
-        h,s,v = (100 - self.ui.hue_selector.y() / 1.85, (self.ui.selector.x() + 6) / 2.0, (194 - self.ui.selector.y()) / 2.0)
-        print( h,s,v )
-        r,g,b = hsv2rgb(h,s,v)
-        self.color = (h,s,v)
-        self.setRGB((r,g,b))
-        self.setHex(hsv2hex(self.color))
-        self.ui.color_vis.setStyleSheet(f"background-color: rgb({r},{g},{b})")
-        self.ui.color_view.setStyleSheet(f"border-radius: 5px;background-color: qlineargradient(x1:1, x2:0, stop:0 hsl({h}%,100%,50%), stop:1 #fff);")
-    
     def labChanged(self):
         # This is L in the range [0,100]
         L = 100 - self.ui.hue_selector.y() / 1.85
@@ -149,14 +138,18 @@ class ColorPicker(QDialog):
         A = 128.0 * ( A*2.0 - 1.0 )
         B = 128.0 * ( B*2.0 - 1.0 )
         
-        r,g,b = ( color.lab2rgb(np.array([(L,A,B)]))[0]*255. ).round().clip(0,255).astype(int)
+        r,g,b = color2rgb((L,A,B))
         self.color = (L,A,B)
         self.setRGB((r,g,b))
         self.setHex(rgb2hex((r,g,b)))
         self.ui.color_vis.setStyleSheet(f"background-color: rgb({r},{g},{b})")
         # self.ui.color_view.setStyleSheet(f"border-radius: 5px;background-color: qlineargradient(x1:1, x2:0, stop:0 hsl({h}%,100%,50%), stop:1 #fff);")
         
-        print( "LAB:", L, A, B )
+        self.updateImages()
+    
+    def updateImages(self):
+        L,A,B = self.color
+        # print( "LAB:", L, A, B )
         
         gamutAB = np.zeros((200,200,3))
         ## L is fixed.
@@ -165,7 +158,7 @@ class ColorPicker(QDialog):
         gamutAB[:,:,1] = np.linspace(-128,128,200)[None,:]
         ## B varies from -128 to 128 along the first axis
         gamutAB[:,:,2] = np.linspace(128,-128,200)[:,None]
-        self.ui.color_view.setPixmap( QPixmap( QImageFromNumPyImage( color.lab2rgb( gamutAB ) ) ) )
+        self.ui.color_view.setPixmap( QPixmap( QImageFromNumPyImage( skimage.color.lab2rgb( gamutAB ) ) ) )
         
         ## Columns are +x axis on the image.
         ## Rows are -y axis.
@@ -180,7 +173,7 @@ class ColorPicker(QDialog):
         gamutL[:,:,2] = B
         ## L varies from 0 to 100 alone the second axis
         gamutL[:,:,0] = np.linspace(100,0,200)[:,None]
-        self.ui.hue_bg.setPixmap( QPixmap( QImageFromNumPyImage( color.lab2rgb( gamutL ) ) ) )
+        self.ui.hue_bg.setPixmap( QPixmap( QImageFromNumPyImage( skimage.color.lab2rgb( gamutL ) ) ) )
     
     def rgbChanged(self):
         r,g,b = self.i(self.ui.red.text()), self.i(self.ui.green.text()), self.i(self.ui.blue.text())
@@ -196,8 +189,8 @@ class ColorPicker(QDialog):
             self.setRGB((cr,cg,cb))
             self.ui.blue.selectAll()
 
-        self.color = rgb2hsv(r,g,b)
-        self.setHSV(self.color)
+        self.color = rgb2color((r,g,b))
+        self.setLAB(self.color)
         self.setHex(rgb2hex((r,g,b)))
         self.ui.color_vis.setStyleSheet(f"background-color: rgb({r},{g},{b})")
 
@@ -209,8 +202,8 @@ class ColorPicker(QDialog):
             hex = "000000"
             self.ui.hex.setText("")
         r, g, b = hex2rgb(hex)
-        self.color = hex2hsv(hex)
-        self.setHSV(self.color)
+        self.color = hex2color(hex)
+        self.setLAB(self.color)
         self.setRGB((r, g, b))
         self.ui.color_vis.setStyleSheet(f"background-color: rgb({r},{g},{b})")
 
@@ -231,10 +224,14 @@ class ColorPicker(QDialog):
         self.ui.green.setText(str(self.i(g)))
         self.ui.blue.setText(str(self.i(b)))
 
-    def setHSV(self, c):
-        self.ui.hue_selector.move(7, int((100 - c[0]) * 1.85))
-        self.ui.color_view.setStyleSheet(f"border-radius: 5px;background-color: qlineargradient(x1:1, x2:0, stop:0 hsl({c[0]}%,100%,50%), stop:1 #fff);")
-        self.ui.selector.move(int(c[1] * 2 - 6), int((200 - c[2] * 2) - 6))
+    def setLAB(self, c):
+        L,A,B = c
+        
+        self.ui.hue_selector.move(7, int((100-L) * 1.85))
+        self.ui.selector.move(int((0.5*A/128.0 + 0.5) * 200 - 6), int(194 - ((0.5*B/128.0 + 0.5) * 200)))
+        
+        # Update the images
+        self.updateImages()
 
     def setHex(self, c):
         self.ui.hex.setText(c)
@@ -253,16 +250,6 @@ class ColorPicker(QDialog):
             self.dragPos = event.globalPos()
             event.accept()
 
-    def moveSVSelector(self, event):
-        if event.buttons() == Qt.LeftButton:
-            pos = event.pos()
-            if pos.x() < 0: pos.setX(0)
-            if pos.y() < 0: pos.setY(0)
-            if pos.x() > 200: pos.setX(200)
-            if pos.y() > 200: pos.setY(200)
-            self.ui.selector.move(pos - QPoint(6,6))
-            self.hsvChanged()
-    
     def moveABSelector(self, event):
         if event.buttons() == Qt.LeftButton:
             pos = event.pos()
@@ -272,14 +259,6 @@ class ColorPicker(QDialog):
             if pos.y() > 200: pos.setY(200)
             self.ui.selector.move(pos - QPoint(6,6))
             self.labChanged()
-    
-    def moveHueSelector(self, event):
-        if event.buttons() == Qt.LeftButton:
-            pos = event.pos().y() - 7
-            if pos < 0: pos = 0
-            if pos > 185: pos = 185
-            self.ui.hue_selector.move(QPoint(7, pos))
-            self.hsvChanged()
     
     def moveLSelector(self, event):
         if event.buttons() == Qt.LeftButton:
@@ -309,47 +288,24 @@ class ColorPicker(QDialog):
 
 
 # Color Utility
-def hsv2rgb(h_or_color: Union[tuple, int], s: int = 0, v: int = 0, a: int = None) -> tuple:
-    """Convert hsv color to rgb color.
+def color2rgb(color: tuple) -> tuple:
+    """Convert internal color to rgb color.
 
-    :param h_or_color: The 'hue' value or a color tuple.
-    :param s: The 'saturation' value.
-    :param v: The 'value' value.
-    :param a: The 'alpha' value.
+    :param color: The color tuple.
     :return: The converted rgb tuple color.
     """
 
-    if type(h_or_color).__name__ == "tuple":
-        if len(h_or_color) == 4:
-            h, s, v, a = h_or_color
-        else:
-            h, s, v = h_or_color
-    else: h = h_or_color
-    r, g, b = colorsys.hsv_to_rgb(h / 100.0, s / 100.0, v / 100.0)
-    if a is not None: return r * 255, g * 255, b * 255, a
-    return r * 255, g * 255, b * 255
+    return tuple( skimage.color.lab2rgb( np.asarray( color ).reshape(1,1,-1) )[0,0]*255.0 )
 
 
-def rgb2hsv(r_or_color: Union[tuple, int], g: int = 0, b: int = 0, a: int = None) -> tuple:
-    """Convert rgb color to hsv color.
+def rgb2color(rgb: tuple) -> tuple:
+    """Convert rgb color to internal color.
 
-    :param r_or_color: The 'red' value or a color tuple.
-    :param g: The 'green' value.
-    :param b: The 'blue' value.
-    :param a: The 'alpha' value.
-    :return: The converted hsv tuple color.
+    :param rgb: The tuple of red, green, blue values.
+    :return: The converted internal tuple color.
     """
-
-    if type(r_or_color).__name__ == "tuple":
-        if len(r_or_color) == 4:
-            r, g, b, a = r_or_color
-        else:
-            r, g, b = r_or_color
-    else: r = r_or_color
-    h, s, v = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
-    if a is not None: return h * 100, s * 100, v * 100, a
-    return h * 100, s * 100, v * 100
-
+    
+    return tuple( skimage.color.rgb2lab( np.asarray( rgb ).reshape(1,1,-1)/255.0 )[0,0] )
 
 def hex2rgb(hex: str) -> tuple:
     """Convert hex color to rgb color.
@@ -364,45 +320,36 @@ def hex2rgb(hex: str) -> tuple:
     return rgb
 
 
-def rgb2hex(r_or_color: Union[tuple, int], g: int = 0, b: int = 0, a: int = 0) -> str:
+def rgb2hex(rgb: tuple) -> str:
     """Convert rgb color to hex color.
 
-    :param r_or_color: The 'red' value or a color tuple.
-    :param g: The 'green' value.
-    :param b: The 'blue' value.
-    :param a: The 'alpha' value.
+    :param rgb: The tuple of red, green, blue values.
     :return: The converted hexadecimal color.
     """
-
-    if type(r_or_color).__name__ == "tuple": r, g, b = r_or_color[:3]
-    else: r = r_or_color
+    
+    r,g,b = rgb
     hex = '%02x%02x%02x' % (int(r), int(g), int(b))
     return hex
 
 
-def hex2hsv(hex: str) -> tuple:
-    """Convert hex color to hsv color.
+def hex2color(hex: str) -> tuple:
+    """Convert hex color to internal color.
 
     :param hex: The hexadecimal string ("xxxxxx").
-    :return: The converted hsv tuple color.
+    :return: The converted internal tuple color.
     """
 
-    return rgb2hsv(hex2rgb(hex))
+    return rgb2color(hex2rgb(hex))
 
 
-def hsv2hex(h_or_color: Union[tuple, int], s: int = 0, v: int = 0, a: int = 0) -> str:
-    """Convert hsv color to hex color.
+def color2hex(color: tuple) -> str:
+    """Convert internal color to hex color.
 
-    :param h_or_color: The 'hue' value or a color tuple.
-    :param s: The 'saturation' value.
-    :param v: The 'value' value.
-    :param a: The 'alpha' value.
+    :param color: The color tuple.
     :return: The converted hexadecimal color.
     """
 
-    if type(h_or_color).__name__ == "tuple": h, s, v = h_or_color[:3]
-    else: h = h_or_color
-    return rgb2hex(hsv2rgb(h, s, v))
+    return rgb2hex(color2rgb(color))
 
 def QImageFromNumPyImage( arr ):
     ## Source: https://stackoverflow.com/questions/34232632/convert-python-opencv-image-numpy-array-to-pyqt-qpixmap-image
