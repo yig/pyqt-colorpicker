@@ -6,16 +6,10 @@ Simple visual Color Picker with a modern UI created with qtpy to easily get colo
 
 ## Installation
 
-1. Install using pip:
+1. Install using pip directly from GitHub:
 
    ```
-   pip install labcolorpicker
-   ```
-
-   or clone the repository yourself and run:
-
-   ```
-   pip install .
+   pip install git+https://github.com/yig/pyqt-colorpicker
    ```
 
 ## Usage
