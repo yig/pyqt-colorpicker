@@ -1,4 +1,4 @@
-from labcolorpicker import ColorPicker, color2rgb, rgb2color
+from labcolorpicker import ColorPicker, lab2rgb, rgb2lab
 from qtpy.QtWidgets import QApplication
 import sys
 
@@ -17,7 +17,7 @@ my_color_picker.currentColorChanged.connect( currentColorChangedDark )
 
 print("about to pick")
 
-old_color = rgb2color((255, 255, 255))
+old_color = rgb2lab((255, 255, 255))
 picked_color = my_color_picker.getColor(old_color)
 print("picked first")
 print(picked_color)

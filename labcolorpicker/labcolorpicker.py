@@ -205,7 +205,7 @@ class ColorPicker(QDialog):
         if b!=cb or (b==0 and self.ui.blue.hasFocus()):
             self.ui.blue.selectAll()
         
-        color = rgb2color((cr,cg,cb))
+        color = rgb2lab((cr,cg,cb))
         
         if color != self.color:
             self.setCurrentColor( color + (self.alpha,) if self.usingAlpha else color, 'rgb' )
@@ -218,7 +218,7 @@ class ColorPicker(QDialog):
             hex = "000000"
             self.ui.hex.setText("")
         
-        color = hex2color(hex)
+        color = hex2lab(hex)
         
         if color != self.color:
             self.setCurrentColor( color + (self.alpha,) if self.usingAlpha else color, 'hex' )
@@ -243,7 +243,7 @@ class ColorPicker(QDialog):
         """
         
         if skip != 'lab': self.setLAB( self.color )
-        rgb = color2rgb( self.color )
+        rgb = lab2rgb( self.color )
         if skip != 'rgb': self.setRGB( rgb )
         if skip != 'hex': self.setHex( rgb2hex( rgb ) )
         self.setRGBSwatch( rgb )
@@ -255,7 +255,7 @@ class ColorPicker(QDialog):
         :return: None
         """
         
-        r,g,b = color2rgb( self.lastcolor )
+        r,g,b = lab2rgb( self.lastcolor )
         self.ui.lastcolor_vis.setStyleSheet(f"background-color: rgb({r},{g},{b})")
     
     def setRGBSwatch(self, c):
@@ -360,8 +360,8 @@ class ColorPicker(QDialog):
 
 
 # Color Utility
-def color2rgb(color: tuple) -> tuple:
-    """Convert internal color to rgb color.
+def lab2rgb(color: tuple) -> tuple:
+    """Convert internal lab color to rgb color.
 
     :param color: The color tuple.
     :return: The converted rgb tuple color.
@@ -370,11 +370,11 @@ def color2rgb(color: tuple) -> tuple:
     return tuple( skimage.color.lab2rgb( np.asarray( color ).astype(float).reshape(1,1,-1) )[0,0]*255.0 )
 
 
-def rgb2color(rgb: tuple) -> tuple:
-    """Convert rgb color to internal color.
+def rgb2lab(rgb: tuple) -> tuple:
+    """Convert rgb color to internal lab color.
 
     :param rgb: The tuple of red, green, blue values.
-    :return: The converted internal tuple color.
+    :return: The converted internal lab tuple color.
     """
     
     return tuple( skimage.color.rgb2lab( np.asarray( rgb ).reshape(1,1,-1)/255.0 )[0,0] )
@@ -404,24 +404,24 @@ def rgb2hex(rgb: tuple) -> str:
     return hex
 
 
-def hex2color(hex: str) -> tuple:
-    """Convert hex color to internal color.
+def hex2lab(hex: str) -> tuple:
+    """Convert hex color to internal lab color.
 
     :param hex: The hexadecimal string ("xxxxxx").
-    :return: The converted internal tuple color.
+    :return: The converted internal lab tuple color.
     """
 
-    return rgb2color(hex2rgb(hex))
+    return rgb2lab(hex2rgb(hex))
 
 
-def color2hex(color: tuple) -> str:
-    """Convert internal color to hex color.
+def lab2hex(color: tuple) -> str:
+    """Convert internal lab color to hex color.
 
     :param color: The color tuple.
     :return: The converted hexadecimal color.
     """
 
-    return rgb2hex(color2rgb(color))
+    return rgb2hex(lab2rgb(color))
 
 def QImageFromNumPyImage( arr ):
     ## Source: https://stackoverflow.com/questions/34232632/convert-python-opencv-image-numpy-array-to-pyqt-qpixmap-image
