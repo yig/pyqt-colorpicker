@@ -78,7 +78,7 @@ color = my_color_picker.getColor( rgb2lab( 200, 0, 0 ) )
 
    `lab2rgb` **LAB** to **RGB**\
    `rgb2lab` **RGB** to **LAB**\
-   `rgb2hex` **RGB(A)** to **HEX**\
+   `rgb2hex` **RGB** to **HEX**\
    `hex2rgb` **HEX** to **RGB**\
    `hex2lab` **HEX** to **LAB**\
    `lab2hex` **LAB** to **HEX**
