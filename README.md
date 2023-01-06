@@ -22,7 +22,7 @@ To ask for a color, import the `getColor` function and run it:
    color = getColor()
    ```
 
-To get a callback whenever the user changes the active color, create 
+To get a callback whenever the user changes the active color, create an instance of the ColorPicker and connect a callback function:
 
 ```
 from labcolorpicker import ColorPicker, rgb2lab
