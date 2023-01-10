@@ -70,6 +70,7 @@ class ColorPicker(QDialog):
 
         # Connect update functions
         self.ui.hue.mouseMoveEvent = self.moveLSelector
+        self.ui.hue.mousePressEvent = self.moveLSelector
         self.ui.red.textEdited.connect(self.rgbChanged)
         self.ui.green.textEdited.connect(self.rgbChanged)
         self.ui.blue.textEdited.connect(self.rgbChanged)
