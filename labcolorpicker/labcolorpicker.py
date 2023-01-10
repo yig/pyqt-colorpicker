@@ -27,11 +27,12 @@ class ColorPicker(QDialog):
     
     currentColorChanged = Signal(tuple)
     
-    def __init__(self, lightTheme: bool = False, useAlpha: bool = False):
+    def __init__(self, lightTheme: bool = False, useAlpha: bool = False, hideButtons: bool = False):
         """Create a new ColorPicker instance.
 
         :param lightTheme: If the UI should be light themed.
         :param useAlpha: If the ColorPicker should work with alpha values.
+        :param hideButtons: If the ColorPicker should hide the OK/Cancel buttons. This leaves only the close box. This is useful if you are listening to `currentColorChanged()` and don't care about the result of `getColor()`.
         """
 
         # auto-create QApplication if it doesn't exist yet
@@ -47,13 +48,13 @@ class ColorPicker(QDialog):
         if useAlpha:
             if lightTheme: self.ui = Ui_Light_Alpha()
             else: self.ui = Ui_Dark_Alpha()
-            self.ui.setupUi(self)
         else:
             if lightTheme: self.ui = Ui_Light()
             else: self.ui = Ui_Dark()
-            self.ui.setupUi(self)
-
-
+        self.ui.setupUi(self)
+        if hideButtons:
+            self.ui.buttonBox.hide()
+        
         # Make Frameless
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)

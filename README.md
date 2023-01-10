@@ -37,6 +37,9 @@ my_color_picker.currentColorChanged.connect( currentColor )
 color = my_color_picker.getColor( rgb2lab( 200, 0, 0 ) )
 ```
 
+Pass `hideButtons = True` to `ColorPicker()` to hide the OK and Cancel buttons. This leaves only the close box.
+This is useful if you are listening to `currentColorChanged()` and don't care about the result of `getColor()`.
+
 ## Customization
 
 * **Showing custom last color:**
@@ -63,7 +66,7 @@ color = my_color_picker.getColor( rgb2lab( 200, 0, 0 ) )
   ```
 
   When the ColorPicker uses Alpha, you have to pass a LABa tuple
-  as the last color, otherwise there wil be an error.
+  as the last color, otherwise there will be an error.
 
   ```python
   old_color = (100,0,0,100)

@@ -4,7 +4,7 @@ import sys
 
 app = QApplication()
 
-my_color_picker = ColorPicker()
+my_color_picker = ColorPicker( hideButtons = True )
 # my_color_picker_light = ColorPicker(lightTheme=True)
 
 def currentColorChangedDark( color ):
