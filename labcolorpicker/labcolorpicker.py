@@ -250,6 +250,9 @@ class ColorPicker(QDialog):
         if skip != 'hex': self.setHex( rgb2hex( rgb ) )
         self.setRGBSwatch( rgb )
         if skip != 'alpha': self.setAlpha( self.alpha )
+        
+        # Always update the images
+        self.updateImages()
     
     def setGUILastColor(self):
         """Update the last color shown in the GUI.
@@ -275,9 +278,6 @@ class ColorPicker(QDialog):
         
         self.ui.hue_selector.move(7, int((100-L) * 1.85))
         self.ui.selector.move(int((0.5*A/128.0 + 0.5) * 200 - 6), int(194 - ((0.5*B/128.0 + 0.5) * 200)))
-        
-        # Update the images
-        self.updateImages()
     
     def updateImages(self):
         L,A,B = self.color
@@ -290,7 +290,10 @@ class ColorPicker(QDialog):
         gamutAB[:,:,1] = np.linspace(-128,128,200)[None,:]
         ## B varies from -128 to 128 along the first axis
         gamutAB[:,:,2] = np.linspace(128,-128,200)[:,None]
-        self.ui.color_view.setPixmap( QPixmap( QImageFromNumPyImage( skimage.color.lab2rgb( gamutAB ) ) ) )
+        ab_pixmap = QPixmap( QImageFromNumPyImage( skimage.color.lab2rgb( gamutAB ) ) )
+        self.ui.color_view.setPixmap( ab_pixmap )
+        # ab_pixmap.save( "ab_pixmap.png" )
+        # print( f"Saved L={L}:", "ab_pixmap.png" )
         
         ## Columns are +x axis on the image.
         ## Rows are -y axis.
