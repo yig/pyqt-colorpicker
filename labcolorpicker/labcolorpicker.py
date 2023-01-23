@@ -95,6 +95,7 @@ class ColorPicker(QDialog):
         self.lastcolor = (0, 0, 0)
         self.color = (0, 0, 0)
         self.alpha = 100
+        self._lastUpdateImagesColor = None
         self.updateImages()
         
         # self.show()
@@ -283,17 +284,24 @@ class ColorPicker(QDialog):
         L,A,B = self.color
         # print( "LAB:", L, A, B )
         
-        gamutAB = np.zeros((200,200,3))
-        ## L is fixed.
-        gamutAB[:,:,0] = L
-        ## A varies from -128 to 128 along the second axis (columns)
-        gamutAB[:,:,1] = np.linspace(-128,128,200)[None,:]
-        ## B varies from -128 to 128 along the first axis
-        gamutAB[:,:,2] = np.linspace(128,-128,200)[:,None]
-        ab_pixmap = QPixmap( QImageFromNumPyImage( skimage.color.lab2rgb( gamutAB ) ) )
-        self.ui.color_view.setPixmap( ab_pixmap )
-        # ab_pixmap.save( "ab_pixmap.png" )
-        # print( f"Saved L={L}:", "ab_pixmap.png" )
+        abdirty = self._lastUpdateImagesColor is None or self._lastUpdateImagesColor[0] != L
+        Ldirty = self._lastUpdateImagesColor is None or tuple(self._lastUpdateImagesColor[1:3]) != (A,B)
+        
+        if abdirty:
+            gamutAB = np.zeros((200,200,3))
+            ## L is fixed.
+            gamutAB[:,:,0] = L
+            ## A varies from -128 to 128 along the second axis (columns)
+            gamutAB[:,:,1] = np.linspace(-128,128,200)[None,:]
+            ## B varies from -128 to 128 along the first axis
+            gamutAB[:,:,2] = np.linspace(128,-128,200)[:,None]
+            ab_pixmap = QPixmap( QImageFromNumPyImage( skimage.color.lab2rgb( gamutAB ) ) )
+            self.ui.color_view.setPixmap( ab_pixmap )
+            # ab_pixmap.save( "ab_pixmap.png" )
+            # print( f"Saved L={L}:", "ab_pixmap.png" )
+        else:
+            # print( "skipping ab image" )
+            pass
         
         ## Columns are +x axis on the image.
         ## Rows are -y axis.
@@ -302,13 +310,19 @@ class ColorPicker(QDialog):
         # testImage[:,:,0] = np.linspace(0,1.0,200)[:,None]
         # self.ui.color_view.setPixmap( QPixmap( QImageFromNumPyImage( testImage ) ) )
         
-        gamutL = np.zeros((200,20,3))
-        ## AB are fixed.
-        gamutL[:,:,1] = A
-        gamutL[:,:,2] = B
-        ## L varies from 0 to 100 alone the second axis
-        gamutL[:,:,0] = np.linspace(100,0,200)[:,None]
-        self.ui.hue_bg.setPixmap( QPixmap( QImageFromNumPyImage( skimage.color.lab2rgb( gamutL ) ) ) )
+        if Ldirty:
+            gamutL = np.zeros((200,20,3))
+            ## AB are fixed.
+            gamutL[:,:,1] = A
+            gamutL[:,:,2] = B
+            ## L varies from 0 to 100 alone the second axis
+            gamutL[:,:,0] = np.linspace(100,0,200)[:,None]
+            self.ui.hue_bg.setPixmap( QPixmap( QImageFromNumPyImage( skimage.color.lab2rgb( gamutL ) ) ) )
+        else:
+            # print( "skipping L image" )
+            pass
+        
+        self._lastUpdateImagesColor = (L,A,B)
     
     def setHex(self, c):
         self.ui.hex.setText(c)

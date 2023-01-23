@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='labcolorpicker',
-    version='1.5.1',
+    version='1.5.2',
     description='Open a visual LAB colorpicker from any project.',
     long_description='Open a visual LAB colorpicker from any project.\nFor more info visit '
                      'https://github.com/yig/pyqt-colorpicker',

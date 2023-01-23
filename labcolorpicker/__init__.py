@@ -4,7 +4,7 @@ labcolorpicker
 Simply let a user pick a color using a visual selector.
 """
 
-__version__ = "1.5.1"
+__version__ = "1.5.2"
 __author__ = 'yig'
 
 from .labcolorpicker import ColorPicker
